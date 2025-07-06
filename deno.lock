@@ -13,6 +13,9 @@
     "npm:@lem0-packages/puppeteer-page-proxy@^1.4.1": "1.4.1",
     "npm:@types/node@*": "22.15.15",
     "npm:@types/w3c-web-usb@^1.0.10": "1.0.10",
+    "npm:@yellicode/core@^1.5.0": "1.5.0",
+    "npm:@yellicode/templating@^1.9.0": "1.9.0",
+    "npm:@yellicode/typescript@^1.14.2": "1.14.2",
     "npm:cheerio@^1.1.0": "1.1.0",
     "npm:ebay-oauth-nodejs-client@1.2.0": "1.2.0",
     "npm:escpos@^3.0.0-alpha.6": "3.0.0-alpha.6",
@@ -178,6 +181,33 @@
       "integrity": "sha512-oJoftv0LSuaDZE3Le4DbKX+KS9G36NzOeSap90UIK0yMA/NhKJhqlSGtNDORNRaIbQfzjXDrQa0ytJ6mNRGz/Q==",
       "dependencies": [
         "@types/node"
+      ]
+    },
+    "@yellicode/core@1.5.0": {
+      "integrity": "sha512-ZgRISEbqA4KG+j4rxFKi0wz2LwLoX3KMzVrBZIIMhG1qdIQsmXM+dmllBgRn/HUxiCvRGE8V/C1L/alCVS4y5g==",
+      "dependencies": [
+        "nanoid"
+      ]
+    },
+    "@yellicode/elements@1.9.2": {
+      "integrity": "sha512-WJSl0zMjviZlCYkESYqygQ80ncgB8lAwIp6fIdo35Hl5QdKUn7OvKHO4EEXK9DJbAGq2VDK581IEH8MOlNr85Q==",
+      "dependencies": [
+        "@yellicode/core",
+        "toposort"
+      ]
+    },
+    "@yellicode/templating@1.9.0": {
+      "integrity": "sha512-+2FiEkd11jFYQmpfHHyeb4wRZwK9RNkEueeJJcS+mD8L5KU3GCbpcxmqOhg0KzTkjQsqlYb/cLcKCbFr5UvWoQ==",
+      "dependencies": [
+        "@yellicode/core",
+        "@yellicode/elements"
+      ]
+    },
+    "@yellicode/typescript@1.14.2": {
+      "integrity": "sha512-D/tgCjd9bxv5OJDQ3xIp7zIPlQozBSsWu6TJdvA9G4dQITsM+H3fhITqPSxPrirL0C+8POvAzd82xc2hv1hf3w==",
+      "dependencies": [
+        "@yellicode/core",
+        "@yellicode/elements"
       ]
     },
     "agent-base@6.0.2": {
@@ -1042,6 +1072,10 @@
         "tslib"
       ]
     },
+    "nanoid@3.3.11": {
+      "integrity": "sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==",
+      "bin": true
+    },
     "ndarray-pack@1.2.1": {
       "integrity": "sha512-51cECUJMT0rUZNQa09EoKsnFeDL4x2dHRT0VR5U2H5ZgEcm95ZDWcMA5JShroXjHOejmAD/fg8+H+OvUnVXz2g==",
       "dependencies": [
@@ -1486,6 +1520,9 @@
     "through@2.3.8": {
       "integrity": "sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg=="
     },
+    "toposort@2.0.2": {
+      "integrity": "sha512-0a5EOkAUp8D4moMi2W8ZF8jcga7BgZd91O/yabJCFY8az+XSzeGyTKs0Aoo897iV1Nj6guFq8orWDS96z91oGg=="
+    },
     "tough-cookie@2.3.4": {
       "integrity": "sha512-TZ6TTfI5NtZnuyy/Kecv+CnoROnyXn2DN97LontgQpCwsX2XyLYCC0ENhYkehSOwAp8rTQKc/NUIF7BkQ5rKLA==",
       "dependencies": [
@@ -1654,6 +1691,9 @@
       "dependencies": [
         "npm:@lem0-packages/puppeteer-page-proxy@^1.4.1",
         "npm:@types/w3c-web-usb@^1.0.10",
+        "npm:@yellicode/core@^1.5.0",
+        "npm:@yellicode/templating@^1.9.0",
+        "npm:@yellicode/typescript@^1.14.2",
         "npm:cheerio@^1.1.0",
         "npm:ebay-oauth-nodejs-client@1.2.0",
         "npm:escpos@^3.0.0-alpha.6",

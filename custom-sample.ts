@@ -1,39 +1,4 @@
-type HttpMethod = "get" | "post" | "put" | "patch" | "head" | "delete";
-
-type Processor = {
-  request: <B, R>(
-    path: string,
-    options: { body?: B; headers?: Record<string, string>; method: HttpMethod },
-  ) => Promise<R>;
-};
-
-class ProcessorWrapper {
-  private _processor: Processor | null = null;
-
-  get processor(): Processor {
-    if (!this._processor) {
-      throw new Error("Processor not set");
-    }
-    return this._processor;
-  }
-  set processor(processor: Processor) {
-    this._processor = processor;
-  }
-}
-const processorWrapper = new ProcessorWrapper();
-
-export function initApiClient<B>(processor: Processor) {
-  processorWrapper.processor = processor;
-}
-
-const httpClient = {
-  request<B, R>(
-    path: string,
-    options: { body?: B; headers?: Record<string, string>; method: HttpMethod },
-  ): Promise<R> {
-    return processorWrapper.processor.request<B, R>(path, options);
-  },
-};
+import { eBayClient, extractBody } from "./client.ts";
 export interface CreateOfferBody {
   availableQuantity?: number;
 
@@ -181,10 +146,12 @@ export interface CreateOfferResponse {
   }[];
 }
 
-export const createOffer = async (
+export const CreateOffer = async (
   body: CreateOfferBody,
 ): Promise<CreateOfferResponse> => {
-  return await httpClient.request(`offer`, { body, method: "post" });
+  return extractBody(
+    await eBayClient.request(`offer`, { body, method: "post" }),
+  );
 };
 
 export interface PublishOfferPath {
@@ -207,12 +174,12 @@ export interface PublishOfferResponse {
   }[];
 }
 
-export const publishOffer = async (
+export const PublishOffer = async (
   { offerId }: PublishOfferPath,
 ): Promise<PublishOfferResponse> => {
-  return await httpClient.request(`offer/${offerId}/publish`, {
-    method: "post",
-  });
+  return extractBody(
+    await eBayClient.request(`offer/${offerId}/publish`, { method: "post" }),
+  );
 };
 
 export interface GetOfferPath {
@@ -361,10 +328,12 @@ export interface GetOfferResponse {
   };
 }
 
-export const getOffer = async (
+export const GetOffer = async (
   { offerId }: GetOfferPath,
 ): Promise<GetOfferResponse> => {
-  return await httpClient.request(`offer/${offerId}`, { method: "get" });
+  return extractBody(
+    await eBayClient.request(`offer/${offerId}`, { method: "get" }),
+  );
 };
 export interface UpdateOfferBody {
   availableQuantity?: number;
@@ -511,11 +480,13 @@ export interface UpdateOfferResponse {
   }[];
 }
 
-export const updateOffer = async (
-  { offerId }: UpdateOfferPath,
+export const UpdateOffer = async (
   body: UpdateOfferBody,
+  { offerId }: UpdateOfferPath,
 ): Promise<UpdateOfferResponse> => {
-  return await httpClient.request(`offer/${offerId}`, { body, method: "put" });
+  return extractBody(
+    await eBayClient.request(`offer/${offerId}`, { body, method: "put" }),
+  );
 };
 export interface CreateOrReplaceInventoryItemBody {
   availability?: {
@@ -591,14 +562,13 @@ export interface CreateOrReplaceInventoryItemResponse {
   }[];
 }
 
-export const createOrReplaceInventoryItem = async (
-  { sku }: CreateOrReplaceInventoryItemPath,
+export const CreateOrReplaceInventoryItem = async (
   body: CreateOrReplaceInventoryItemBody,
+  { sku }: CreateOrReplaceInventoryItemPath,
 ): Promise<CreateOrReplaceInventoryItemResponse> => {
-  return await httpClient.request(`inventory_item/${sku}`, {
-    body,
-    method: "put",
-  });
+  return extractBody(
+    await eBayClient.request(`inventory_item/${sku}`, { body, method: "put" }),
+  );
 };
 export interface GetInventoryItemBody {
   availability?: {
@@ -674,34 +644,35 @@ export interface GetInventoryItemResponse {
   }[];
 }
 
-export const getInventoryItem = async (
-  { sku }: GetInventoryItemPath,
+export const GetInventoryItem = async (
   body: GetInventoryItemBody,
+  { sku }: GetInventoryItemPath,
 ): Promise<GetInventoryItemResponse> => {
-  return await httpClient.request(`inventory_item/${sku}`, {
-    body,
-    method: "put",
-  });
+  return extractBody(
+    await eBayClient.request(`inventory_item/${sku}`, { body, method: "put" }),
+  );
 };
 
 export interface DeleteInventoryItemPath {
   sku: string;
 }
 
-export const deleteInventoryItem = async (
+export const DeleteInventoryItem = async (
   { sku }: DeleteInventoryItemPath,
 ): Promise<void> => {
-  return await httpClient.request(`inventory_item/${sku}`, {
-    method: "delete",
-  });
+  return extractBody(
+    await eBayClient.request(`inventory_item/${sku}`, { method: "delete" }),
+  );
 };
 
 export interface DeleteOfferPath {
   offerId: string;
 }
 
-export const deleteOffer = async (
+export const DeleteOffer = async (
   { offerId }: DeleteOfferPath,
 ): Promise<void> => {
-  return await httpClient.request(`offer/${offerId}`, { method: "delete" });
+  return extractBody(
+    await eBayClient.request(`offer/${offerId}`, { method: "delete" }),
+  );
 };
