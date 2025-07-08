@@ -1,7 +1,7 @@
 import { camelCase, pascalCase } from "https://deno.land/x/case/mod.ts";
 import fs from "node:fs";
 import openapiTS, { astToString } from "openapi-typescript";
-import { Project, ts, Type } from "ts-morph";
+import { Node, Project, Symbol, ts, Type } from "ts-morph";
 
 import { TextWriter } from "@yellicode/core";
 import { Generator, OutputMode } from "@yellicode/templating";
@@ -11,7 +11,7 @@ import {
   ParameterDefinition,
   TypeScriptWriter,
 } from "@yellicode/typescript";
-import { TsConfigResolver } from "jsr:@ts-morph/common@0.27";
+import { SyntaxKind, TsConfigResolver } from "jsr:@ts-morph/common@0.27";
 
 const project = new Project();
 
@@ -76,6 +76,14 @@ const typeWithNewDef = [
 ];
 
 const schemaObj = file.getInterface("paths")!!.getType(); //.getProperty("schemas")
+
+const operations = file.getInterface("operations")!!.getType();
+
+const methodTypeNameToOperationNameMap = new Map<string, string>(
+  operations.getProperties().map(
+    (prop) => [prop.getTypeAtLocation(file).getText(), prop.getName()],
+  ),
+);
 // ?.getType();
 const flag = `/***************BEGIN GENERATED CODE*************/`;
 const tunnel = (
@@ -85,12 +93,9 @@ const tunnel = (
   const fields = field.split(".").reverse();
   const currentField = fields.pop();
   const newFields = fields.reverse().join(".");
-  console.log(fields, field);
 
   const newType = s?.getProperty(currentField!!)?.getValueDeclaration()
     ?.getType();
-
-  console.log("currentField", currentField, !!newType!!, newFields);
 
   if (newFields.length) {
     return tunnel(newType, newFields);
@@ -98,6 +103,100 @@ const tunnel = (
   return newType;
 };
 
+const tunnelValue = (
+  s: Node<ts.Node> | undefined,
+  field: string,
+): Node<ts.Node> | undefined => {
+  const fields = field.split(".").reverse();
+  const currentField = fields.pop();
+  const newFields = fields.reverse().join(".");
+
+  const newType = s?.getType()?.getProperty(currentField!!)
+    ?.getValueDeclaration();
+
+  if (newFields.length) {
+    return tunnelValue(newType, newFields);
+  }
+  return newType;
+};
+
+abstract class BaseWriteElement {
+  public abstract write(tw: TypeScriptWriter): void;
+}
+
+class OneToManyWriteElement extends BaseWriteElement {
+  constructor(private writableElements: BaseWriteElement[]) {
+    super();
+  }
+
+  public override write(tw: TypeScriptWriter): void {
+    this.writableElements.forEach((e) => e.write(tw));
+  }
+}
+
+const restMethods = [
+  "get",
+  "post",
+  "put",
+  "patch",
+  "delete",
+  "head",
+  "options",
+  "trace",
+];
+
+class ApiClient extends OneToManyWriteElement {
+  static async generateFrom(url: string) {
+    const ast = await openapiTS(
+      new URL(
+        url,
+      ),
+    );
+  }
+
+  constructor(private clientName: string) {
+    super(
+      file.getInterface("paths")!.getType().getProperties().flatMap(
+        (prop) => {
+          const valueDecl = prop.getValueDeclaration();
+          console.log(!!valueDecl);
+          if (valueDecl) {
+            return [new PathDef(valueDecl.getText(), valueDecl.getType())];
+          }
+          return [];
+        },
+      ),
+    );
+  }
+}
+
+class PathDef extends OneToManyWriteElement {
+  constructor(
+    private pathStr: string,
+    private path: Type<ts.Type>,
+  ) {
+    super(restMethods.flatMap((methodStr) => {
+      const methodType = path.getProperty(methodStr)?.getValueDeclaration()
+        ?.getType();
+
+      if (!methodType) {
+        return [];
+      }
+      return [
+        new ApiMethod(
+          pathStr,
+          methodTypeNameToOperationNameMap.get(methodType.getText())!,
+          methodType,
+          methodStr,
+        ),
+      ];
+    }));
+
+    // path.getProperties().map();
+  }
+}
+
+new ApiClient("inventory");
 class ApiMethod {
   private body: Body;
   private response: Response;
@@ -108,12 +207,12 @@ class ApiMethod {
     private requestInfo: Type<ts.Type>,
     private apiMethod: string,
   ) {
-    console.log("???????");
+    // console.log("???????");
     const requestBodyType = tunnel(
       requestInfo,
       "requestBody.content.application/json",
     );
-    console.log(!!requestBodyType);
+    // console.log(!!requestBodyType);
     const responseBodyType = tunnel(
       requestInfo,
       "responses",
@@ -240,12 +339,12 @@ class ElementWithType {
   }
 
   public write(tw: TypeScriptWriter) {
-    console.log("hererere");
+    // console.log("hererere");
     if (!this.exists) {
-      console.log("not writing", this.name);
+      // console.log("not writing", this.name);
       return;
     }
-    console.log("riting", this.name);
+    // console.log("riting", this.name);
     tw.writeInterfaceBlock(this.yelliType!!, (w) => {
       this.yelliType!!.properties?.forEach((prop) => {
         w.writeProperty(prop);
@@ -305,11 +404,6 @@ const yelliCodeApiMethods = typeWithNewDef.flatMap(({ name, path, method }) => {
   const requestInfo = tunnel(
     schemaObj,
     `${path}.${method.toLocaleLowerCase()}`,
-  );
-  console.log(
-    "requestInfo",
-    `${path}.${method.toLocaleLowerCase()}`,
-    !!requestInfo,
   );
   if (!requestInfo) {
     return [];

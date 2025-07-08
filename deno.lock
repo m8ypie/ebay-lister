@@ -24,8 +24,9 @@
     "npm:openapi-typescript@^7.8.0": "7.8.0_typescript@5.8.3",
     "npm:puppeteer-core@^24.10.2": "24.11.2_devtools-protocol@0.0.1464554",
     "npm:puppeteer-page-proxy@^1.3.0": "1.3.0",
-    "npm:puppeteer@^24.10.2": "24.11.2_devtools-protocol@0.0.1464554",
-    "npm:scryfall-sdk@^5.0.3": "5.0.3"
+    "npm:puppeteer@^24.10.2": "24.11.2_devtools-protocol@0.0.1464554_typescript@5.8.3",
+    "npm:scryfall-sdk@^5.0.3": "5.0.3",
+    "npm:typescript@^5.8.3": "5.8.3"
   },
   "jsr": {
     "@david/code-block-writer@13.0.3": {
@@ -462,6 +463,19 @@
         "import-fresh",
         "js-yaml",
         "parse-json@5.2.0"
+      ]
+    },
+    "cosmiconfig@9.0.0_typescript@5.8.3": {
+      "integrity": "sha512-itvL5h8RETACmOTFc4UfIyB2RfEHi71Ax6E/PivVxq9NseKbOWpeyHEOIbmAw1rs8Ak0VursQNww7lf7YtUwzg==",
+      "dependencies": [
+        "env-paths",
+        "import-fresh",
+        "js-yaml",
+        "parse-json@5.2.0",
+        "typescript"
+      ],
+      "optionalPeers": [
+        "typescript"
       ]
     },
     "cryptiles@2.0.5": {
@@ -1290,7 +1304,20 @@
       "dependencies": [
         "@puppeteer/browsers",
         "chromium-bidi",
-        "cosmiconfig",
+        "cosmiconfig@9.0.0",
+        "devtools-protocol",
+        "puppeteer-core",
+        "typed-query-selector"
+      ],
+      "scripts": true,
+      "bin": true
+    },
+    "puppeteer@24.11.2_devtools-protocol@0.0.1464554_typescript@5.8.3": {
+      "integrity": "sha512-HopdRZWHa5zk0HSwd8hU+GlahQ3fmesTAqMIDHVY9HasCvppcYuHYXyjml0nlm+nbwVCqAQWV+dSmiNCrZGTGQ==",
+      "dependencies": [
+        "@puppeteer/browsers",
+        "chromium-bidi",
+        "cosmiconfig@9.0.0_typescript@5.8.3",
         "devtools-protocol",
         "puppeteer-core",
         "typed-query-selector"
@@ -1703,7 +1730,8 @@
         "npm:puppeteer-core@^24.10.2",
         "npm:puppeteer-page-proxy@^1.3.0",
         "npm:puppeteer@^24.10.2",
-        "npm:scryfall-sdk@^5.0.3"
+        "npm:scryfall-sdk@^5.0.3",
+        "npm:typescript@^5.8.3"
       ]
     }
   }
