@@ -1,11 +1,9 @@
 import * as Scry from "scryfall-sdk";
-import type {
-  EbayOfferDetailsWithKeys,
-  InventoryItem,
-} from "ebay-api/types/index.js";
 import runtimeConfig from "@ebay/config";
 import { emidToTcgLookUp } from "./emidLookup.ts";
 import { CardItem } from "./echoMtg.ts";
+import { CreateOfferBody } from "./ebay/ebayHttpClient.ts";
+import { CreateOrReplaceInventoryItemBody } from "../custom-sample.ts";
 
 export const promoTypeTextMap = {
   [Scry.PromoType[Scry.PromoType.fracturefoil]]: "Fracture Foil",
@@ -163,7 +161,7 @@ Scry.Card.prototype.getFoil = function (): boolean {
 
 export type Card = Scry.Card;
 
-Scry.Card.prototype.toEbayOffer = function (): EbayOfferDetailsWithKeys {
+Scry.Card.prototype.toEbayOffer = function (): CreateOfferBody {
   return {
     sku: this.id,
     marketplaceId: "EBAY_AU",
@@ -196,13 +194,16 @@ Scry.Card.prototype.toEbayOffer = function (): EbayOfferDetailsWithKeys {
   };
 };
 
-Scry.Card.prototype.toEbayListingItem = function (): InventoryItem {
-  const image = this.getImageURI("border_crop")
-    ? [this.getImageURI("border_crop")!!]
-    : [];
+Scry.Card.prototype.toEbayListingItem =
+  function (): CreateOrReplaceInventoryItemBody {
+    const image = this.getImageURI("border_crop")
+      ? [this.getImageURI("border_crop")!!]
+      : [];
 
-  const productWithCorrectedAspects: Omit<InventoryItem["product"], "aspects"> =
-    {
+    const productWithCorrectedAspects: Omit<
+      CreateOrReplaceInventoryItemBody["product"],
+      "aspects"
+    > = {
       title: this.getEbayName(),
       aspects: {
         Autographed: ["No"],
@@ -222,33 +223,33 @@ Scry.Card.prototype.toEbayListingItem = function (): InventoryItem {
       },
       imageUrls: [...image],
     };
-  return {
-    product: productWithCorrectedAspects,
-    condition: "USED_VERY_GOOD",
-    packageWeightAndSize: {
-      dimensions: {
-        width: 11,
-        length: 17,
-        height: 2,
-        unit: "CENTIMETER",
+    return {
+      product: productWithCorrectedAspects,
+      condition: "USED_VERY_GOOD",
+      packageWeightAndSize: {
+        dimensions: {
+          width: 11,
+          length: 17,
+          height: 2,
+          unit: "CENTIMETER",
+        },
+        packageType: "PADDED_BAGS",
+        weight: {
+          value: 0.1,
+          unit: "KILOGRAM",
+        },
+        shippingIrregular: false,
       },
-      packageType: "PADDED_BAGS",
-      weight: {
-        value: 0.1,
-        unit: "KILOGRAM",
+      availability: {
+        shipToLocationAvailability: {
+          quantity: 1,
+        },
       },
-      shippingIrregular: false,
-    },
-    availability: {
-      shipToLocationAvailability: {
-        quantity: 1,
-      },
-    },
-    conditionDescriptors: [
-      {
-        name: "40001",
-        values: ["400010"],
-      },
-    ],
+      conditionDescriptors: [
+        {
+          name: "40001",
+          values: ["400010"],
+        },
+      ],
+    };
   };
-};
