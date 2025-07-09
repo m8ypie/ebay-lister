@@ -10,6 +10,7 @@ import {
   updateOffer,
 } from "./ebayHttpClient.ts";
 import { Card } from "../scryfall.ts";
+import "./ebayClientInit.ts";
 
 const printErrorIfHttp = async (err: any) => {
   if (err instanceof HTTPError == true) {
