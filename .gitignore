@@ -93,5 +93,6 @@ typings/
 
 # DynamoDB Local files
 .dynamodb/
+temp/
 
 _dist

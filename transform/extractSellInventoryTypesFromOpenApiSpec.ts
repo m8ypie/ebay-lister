@@ -1,7 +1,16 @@
 import { camelCase, pascalCase } from "https://deno.land/x/case/mod.ts";
-import fs from "node:fs";
+import ky, { KyInstance } from "ky";
 import openapiTS, { astToString } from "openapi-typescript";
-import { Node, Project, Symbol, ts, Type } from "ts-morph";
+import {
+  InterfaceDeclaration,
+  Node,
+  Project,
+  ResolutionHosts,
+  SourceFile,
+  Symbol,
+  ts,
+  Type,
+} from "ts-morph";
 
 import { TextWriter } from "@yellicode/core";
 import { Generator, OutputMode } from "@yellicode/templating";
@@ -11,81 +20,9 @@ import {
   ParameterDefinition,
   TypeScriptWriter,
 } from "@yellicode/typescript";
-import { SyntaxKind, TsConfigResolver } from "jsr:@ts-morph/common@0.27";
+import path from "node:path";
+import { text } from "node:stream/consumers";
 
-const project = new Project();
-
-const ast = await openapiTS(
-  new URL(
-    "https://developer.ebay.com/api-docs/master/sell/inventory/openapi/3/sell_inventory_v1_oas3.json",
-  ),
-);
-const contents = astToString(ast);
-
-// (optional) write to file
-fs.writeFileSync("./my-schema.ts", contents);
-
-const file = project.createSourceFile("temp.ts", contents);
-// const newFile = project.addSourceFileAtPath("../services/ebay/sellTypes.ts");
-const offerCreateBody = file.getInterface("components")?.getProperty("schemas")
-  ?.getType()
-  .getProperty("EbayOfferDetailsWithKeys")?.getValueDeclaration()?.getType()
-  .getText();
-
-const typeWithNewDef = [
-  {
-    name: "CreateOffer",
-    path: "/offer",
-    method: "POST",
-  },
-  {
-    name: "PublishOffer",
-    path: "/offer/{offerId}/publish",
-    method: "POST",
-  },
-  {
-    name: "GetOffer",
-    path: "/offer/{offerId}",
-    method: "GET",
-  },
-  {
-    name: "UpdateOffer",
-    path: "/offer/{offerId}",
-    method: "PUT",
-  },
-  {
-    name: "CreateOrReplaceInventoryItem",
-    path: "/inventory_item/{sku}",
-    method: "PUT",
-  },
-  {
-    name: "GetInventoryItem",
-    path: "/inventory_item/{sku}",
-    method: "PUT",
-  },
-  {
-    name: "DeleteInventoryItem",
-    path: "/inventory_item/{sku}",
-    method: "DELETE",
-  },
-  {
-    name: "DeleteOffer",
-    path: "/offer/{offerId}",
-    method: "DELETE",
-  },
-];
-
-const schemaObj = file.getInterface("paths")!!.getType(); //.getProperty("schemas")
-
-const operations = file.getInterface("operations")!!.getType();
-
-const methodTypeNameToOperationNameMap = new Map<string, string>(
-  operations.getProperties().map(
-    (prop) => [prop.getTypeAtLocation(file).getText(), prop.getName()],
-  ),
-);
-// ?.getType();
-const flag = `/***************BEGIN GENERATED CODE*************/`;
 const tunnel = (
   s: Type<ts.Type> | undefined,
   field: string,
@@ -129,6 +66,10 @@ class OneToManyWriteElement extends BaseWriteElement {
     super();
   }
 
+  protected addToWritableElements(element: BaseWriteElement[]) {
+    this.writableElements.push(...element);
+  }
+
   public override write(tw: TypeScriptWriter): void {
     this.writableElements.forEach((e) => e.write(tw));
   }
@@ -143,49 +84,167 @@ const restMethods = [
   "head",
   "options",
   "trace",
-];
+] as const;
 
-class ApiClient extends OneToManyWriteElement {
-  static async generateFrom(url: string) {
+type OpenIdPathInfo = {
+  parameters: {
+    name: string;
+    in: "path" | "header";
+  }[];
+  operationId: string;
+  pathStr: string;
+};
+
+export class ApiClient extends OneToManyWriteElement {
+  static API_TEMP_FILE_NAME = "temp.ts";
+  static async generateFrom(
+    { url, apiName, clientFilePath }: {
+      url: string;
+      apiName: string;
+      clientFilePath: string;
+    },
+  ) {
+    const openApiJson = await ky.get<
+      {
+        paths: Record<
+          string,
+          Record<
+            string,
+            {
+              operationId: string;
+              parameters?: [{ name: string; in: "path" | "header" }];
+            }
+          >
+        >;
+      }
+    >(url).json();
+
+    const pathAndRequestMethodToOperationNameMap = new Map(
+      Object.entries(openApiJson.paths).flatMap(([path, data]) => {
+        return Object.entries(data).map<{ mapData: [string, OpenIdPathInfo] }>(
+          ([method, opeationData]) => {
+            const objKey = `${path}${method}`;
+            const parameters = (opeationData.parameters || []).filter((data) =>
+              data.in === "path"
+            );
+            const operationId = opeationData.operationId;
+
+            const objData = { parameters, operationId, pathStr: path };
+            return { mapData: [objKey, objData] };
+          },
+        );
+      }).map((data) => (data.mapData)),
+    );
+
     const ast = await openapiTS(
-      new URL(
-        url,
-      ),
+      JSON.stringify(openApiJson),
+    );
+    const contents = astToString(ast);
+
+    const project = new Project();
+    const workspace = new Project({
+      resolutionHost: ResolutionHosts.deno,
+    });
+    project.createSourceFile(this.API_TEMP_FILE_NAME, contents);
+
+    console.log(import.meta.dirname, Deno.cwd());
+
+    return new ApiClient(
+      apiName,
+      clientFilePath,
+      project,
+      workspace,
+      pathAndRequestMethodToOperationNameMap,
     );
   }
 
-  constructor(private clientName: string) {
+  private tempFile: SourceFile;
+  private paths: InterfaceDeclaration;
+  private operations: InterfaceDeclaration;
+
+  constructor(
+    private clientName: string,
+    private clientFilePath: string,
+    private tempOpenApiProj: Project,
+    private workspace: Project,
+    private pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
+  ) {
     super(
-      file.getInterface("paths")!.getType().getProperties().flatMap(
+      [],
+    );
+
+    this.tempFile = this.tempOpenApiProj.getSourceFileOrThrow(
+      ApiClient.API_TEMP_FILE_NAME,
+    );
+    this.paths = this.tempFile.getInterfaceOrThrow("paths");
+    this.operations = this.tempFile.getInterfaceOrThrow("operations");
+    this.addToWritableElements(
+      this.paths.getType().getProperties().flatMap(
         (prop) => {
           const valueDecl = prop.getValueDeclaration();
-          console.log(!!valueDecl);
           if (valueDecl) {
-            return [new PathDef(valueDecl.getText(), valueDecl.getType())];
+            console.log(valueDecl.getSymbol()?.getName());
+            return [
+              new PathDef(
+                valueDecl.getSymbol()!!.getName(),
+                valueDecl.getType(),
+                pathAndRequestMethodToOperationNameMap,
+              ),
+            ];
           }
           return [];
         },
       ),
     );
   }
+
+  writeApiClient() {
+    Generator.generate(
+      {
+        outputFile: `./${this.clientFilePath}${this.clientName}.ts`,
+        outputMode: OutputMode.Overwrite,
+      },
+      (output: TextWriter) => {
+        const ts = new TypeScriptWriter(output);
+        ts.writeFile("./transform/apiClientTemplate.ts");
+        this.write(ts);
+      },
+    );
+  }
 }
+
+type PathData = {
+  pathType: Type<ts.Type>;
+  pathData: OpenIdPathInfo;
+};
 
 class PathDef extends OneToManyWriteElement {
   constructor(
     private pathStr: string,
     private path: Type<ts.Type>,
+    private pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
   ) {
     super(restMethods.flatMap((methodStr) => {
       const methodType = path.getProperty(methodStr)?.getValueDeclaration()
         ?.getType();
-
-      if (!methodType) {
+      const pathData = pathAndRequestMethodToOperationNameMap.get(
+        `${pathStr}${methodStr}`,
+      );
+      console.log(
+        // !methodType,
+        // "||",
+        // !pathData,
+        // pathAndRequestMethodToOperationNameMap.keys(),
+        `${pathStr}${methodStr}`,
+      );
+      if (!methodType || !pathData) {
         return [];
       }
+      console.log(1);
       return [
         new ApiMethod(
           pathStr,
-          methodTypeNameToOperationNameMap.get(methodType.getText())!,
+          pathData.operationId,
           methodType,
           methodStr,
         ),
@@ -196,7 +255,6 @@ class PathDef extends OneToManyWriteElement {
   }
 }
 
-new ApiClient("inventory");
 class ApiMethod {
   private body: Body;
   private response: Response;
@@ -399,207 +457,3 @@ class Path extends ElementWithType {
     }}`;
   }
 }
-
-const yelliCodeApiMethods = typeWithNewDef.flatMap(({ name, path, method }) => {
-  const requestInfo = tunnel(
-    schemaObj,
-    `${path}.${method.toLocaleLowerCase()}`,
-  );
-  if (!requestInfo) {
-    return [];
-  }
-  try {
-    return [new ApiMethod(path, name, requestInfo, method)];
-  } catch (err) {
-    console.log(err);
-    return [];
-  }
-});
-
-Generator.generate(
-  {
-    outputFile: "./services/ebay/ebayHttpClient.ts",
-    outputMode: OutputMode.Overwrite,
-  },
-  (output: TextWriter) => {
-    const ts = new TypeScriptWriter(output);
-    ts.writeFile("./transform/apiClientTemplate.ts");
-    yelliCodeApiMethods.forEach((yell) => yell.write(ts));
-  },
-);
-
-// const apiClientConfig = typeWithNewDef.flatMap(({ name, path, method }) => {
-//   // const methodName = method.charAt(0).toUpperCase() + method.slice(1);
-//   try {
-//     const prop = tunnel(schemaObj, path);
-//     const requestInfo = tunnel(prop, method.toLocaleLowerCase());
-//     const bodyType2 = tunnel(
-//       tunnel(tunnel(requestInfo, "requestBody"), "content"),
-//       "application/json",
-//     );
-//     const bodyType = bodyType2?.getText();
-//     const responseBody = getTextOrUnknown(
-//       tunnel(requestInfo, "responses")?.getProperties().map((it) =>
-//         tunnel(it.getValueDeclaration()?.getType(), "content")
-//       )
-//         .map((it) => tunnel(it, "application/json"))
-//         .find((it) => !!it),
-//     );
-
-//     const pathParams = getTextOrUnknown(
-//       tunnel(tunnel(requestInfo, "parameters"), "path"),
-//     );
-//     const values = tunnel(tunnel(requestInfo, "parameters"), "path")
-//       ?.getProperties().map(
-//         (p) => p.getName(),
-//       ).join(",");
-//     const pathValues = values?.length
-//       ? "{" +
-//         tunnel(tunnel(requestInfo, "parameters"), "path")?.getProperties()
-//           .map(
-//             (p) => p.getName(),
-//           ).join(",") +
-//         "}"
-//       : "unknown";
-//     const stringTempate = "`" + path.split("{").join("${").slice(1) + "`";
-//     const nullTypes = ["undefined", "unknown"];
-//     const bodyExists = !nullTypes.includes(bodyType || "unknown");
-//     const pathValuesExists = !nullTypes.includes(pathValues || "unknown");
-//     return [{
-//       stringTempate,
-//       bodyExists,
-//       pathValuesExists,
-//       responseBody,
-//       pathParams,
-//       pathValues,
-//       name,
-//       bodyType,
-//       method,
-//       bodyType2,
-//     }];
-//   } catch (err) {
-//     console.log(err);
-//   }
-//   return [];
-// });
-
-// const r = apiClientConfig.filter((t) => t.bodyExists);
-// Generator.generate(
-//   { outputFile: "./custom-sample.ts" },
-//   (output: TextWriter) => {
-//     const ts = new TypeScriptWriter(output);
-//     r.forEach(
-//       (
-//         {
-//           bodyExists,
-//           responseBody,
-//           name,
-//           pathParams,
-//           pathValues,
-//           pathValuesExists,
-//           bodyType,
-//           method,
-//           stringTempate,
-//           bodyType2,
-//         },
-//       ) => {
-//         const camel = camelCase(name);
-//         const pascal = pascalCase(name);
-
-//         const func: FunctionDefinition = {
-//           name: camel,
-//           isAsync: true,
-//           parameters: [],
-//         };
-//         if (bodyExists) {
-//           const bodyType: InterfaceDefinition = {
-//             name: `${pascal}Body`,
-//             export: true,
-//             properties: bodyType2!!.getProperties()!!.map((prop) => ({
-//               typeName: prop.getValueDeclaration()!!.getType().getText(),
-//               name: prop.getName(),
-//               isOptional: prop.isOptional(),
-//             })),
-//           };
-//           const bodyDef: {
-//             bodyType: InterfaceDefinition;
-//             argName: string;
-//             getParamDef: () => ParameterDefinition[];
-//           } = {
-//             bodyType,
-//             argName: "body",
-//             getParamDef: () => {
-//               if (!bodyExists) {
-//                 return [];
-//               }
-//               return [{
-//                 typeName: bodyType.name,
-//                 name: "body",
-//                 isOptional: false,
-//               }];
-//             },
-//           };
-//           ts.writeInterfaceBlock(bodyDef.bodyType, (w) => {
-//             bodyDef.bodyType.properties?.forEach((prop) => {
-//               w.writeProperty(prop);
-//               w.writeLine();
-//             });
-//           });
-//           ts.writeLine();
-//           // console.log(ts.)
-//         }
-//       },
-//     );
-//   },
-// );
-// const api = project.createSourceFile(
-//   "./services/ebay/ebayHttpClient.ts",
-//   (writer) => {
-//     writer.write(maintainedCode);
-//     apiClientConfig.forEach(
-//       (
-//         {
-//           bodyExists,
-//           responseBody,
-//           name,
-//           pathParams,
-//           pathValues,
-//           pathValuesExists,
-//           bodyType,
-//           method,
-//           stringTempate,
-//         },
-//       ) => {
-//         const camel = camelCase(name);
-//         const pascal = pascalCase(name);
-//         if (bodyExists) {
-//           writer.write(
-//             `export type ${pascal}Body = ${bodyType}\n`,
-//           );
-//         }
-//         if (pathValuesExists) {
-//           writer.write(
-//             `export type ${pascal}PathParams = ${pathParams}\n`,
-//           );
-//         }
-//         writer.write(
-//           `
-//         export type ${pascal}Response = ${responseBody}
-//         export const ${camel} = async(${
-//             pathValuesExists ? `${pathValues}: ${pascal}PathParams,` : ""
-//           }${
-//             bodyExists ? `body:${pascal}Body` : ""
-//           } ):Promise<${pascal}Response> => {
-//           return await eBayClient.${camelCase(method)}(${stringTempate}${
-//             bodyExists ? `, {json:body}` : ""
-//           }).json()
-//         }
-
-//         `,
-//         );
-//       },
-//     );
-//   },
-//   { overwrite: true },
-// );
-// api.saveSync();

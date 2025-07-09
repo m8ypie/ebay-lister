@@ -1,7 +1,7 @@
 {
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "generateClients": "deno run -A ./transform/extractSellInventoryTypesFromOpenApiSpec.ts && deno fmt"
+    "generateClients": "deno run -A ./transform/mod.ts && deno fmt"
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@1",
