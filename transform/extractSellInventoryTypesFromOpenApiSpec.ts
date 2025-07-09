@@ -1,5 +1,5 @@
 import { camelCase, pascalCase } from "https://deno.land/x/case/mod.ts";
-import ky, { KyInstance } from "ky";
+import ky from "ky";
 import openapiTS, { astToString } from "openapi-typescript";
 import {
   InterfaceDeclaration,
@@ -7,7 +7,6 @@ import {
   Project,
   ResolutionHosts,
   SourceFile,
-  Symbol,
   ts,
   Type,
 } from "ts-morph";
@@ -20,8 +19,6 @@ import {
   ParameterDefinition,
   TypeScriptWriter,
 } from "@yellicode/typescript";
-import path from "node:path";
-import { text } from "node:stream/consumers";
 
 const tunnel = (
   s: Type<ts.Type> | undefined,
@@ -147,8 +144,6 @@ export class ApiClient extends OneToManyWriteElement {
     });
     project.createSourceFile(this.API_TEMP_FILE_NAME, contents);
 
-    console.log(import.meta.dirname, Deno.cwd());
-
     return new ApiClient(
       apiName,
       clientFilePath,
@@ -166,8 +161,8 @@ export class ApiClient extends OneToManyWriteElement {
     private clientName: string,
     private clientFilePath: string,
     private tempOpenApiProj: Project,
-    private workspace: Project,
-    private pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
+    workspace: Project,
+    pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
   ) {
     super(
       [],
@@ -183,7 +178,6 @@ export class ApiClient extends OneToManyWriteElement {
         (prop) => {
           const valueDecl = prop.getValueDeclaration();
           if (valueDecl) {
-            console.log(valueDecl.getSymbol()?.getName());
             return [
               new PathDef(
                 valueDecl.getSymbol()!!.getName(),
@@ -220,9 +214,9 @@ type PathData = {
 
 class PathDef extends OneToManyWriteElement {
   constructor(
-    private pathStr: string,
-    private path: Type<ts.Type>,
-    private pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
+    pathStr: string,
+    path: Type<ts.Type>,
+    pathAndRequestMethodToOperationNameMap: Map<string, OpenIdPathInfo>,
   ) {
     super(restMethods.flatMap((methodStr) => {
       const methodType = path.getProperty(methodStr)?.getValueDeclaration()
@@ -230,17 +224,10 @@ class PathDef extends OneToManyWriteElement {
       const pathData = pathAndRequestMethodToOperationNameMap.get(
         `${pathStr}${methodStr}`,
       );
-      console.log(
-        // !methodType,
-        // "||",
-        // !pathData,
-        // pathAndRequestMethodToOperationNameMap.keys(),
-        `${pathStr}${methodStr}`,
-      );
-      if (!methodType || !pathData) {
+      if (!methodType || methodType?.isNever() || !pathData) {
+        console.log(methodType?.getText());
         return [];
       }
-      console.log(1);
       return [
         new ApiMethod(
           pathStr,
