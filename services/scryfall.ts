@@ -2,8 +2,10 @@ import * as Scry from "scryfall-sdk";
 import runtimeConfig from "@ebay/config";
 import { emidToTcgLookUp } from "./emidLookup.ts";
 import { CardItem } from "./echoMtg.ts";
-import { CreateOfferBody } from "./ebay/ebayHttpClient.ts";
-import { CreateOrReplaceInventoryItemBody } from "../custom-sample.ts";
+import {
+  CreateOfferBody,
+  CreateOrReplaceInventoryItemBody,
+} from "@ebay/ebayClient";
 
 export const promoTypeTextMap = {
   [Scry.PromoType[Scry.PromoType.fracturefoil]]: "Fracture Foil",

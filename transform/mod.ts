@@ -1,4 +1,4 @@
-import { ApiClient } from "./extractSellInventoryTypesFromOpenApiSpec.ts";
+import { ApiClient } from "@m8ypie/open-api-http-client-generator";
 const apiClient = await ApiClient.generateFrom({
   apiName: "inventory",
   clientFilePath: "temp/",

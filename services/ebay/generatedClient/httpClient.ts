@@ -26,7 +26,7 @@ export function initApiClient<B>(processor: Processor) {
   processorWrapper.processor = processor;
 }
 
-const httpClient = {
+export const httpClient = {
   request<B, R>(
     path: string,
     options: { body?: B; headers?: Record<string, string>; method: HttpMethod },

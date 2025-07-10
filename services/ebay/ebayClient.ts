@@ -8,7 +8,7 @@ import {
   GetOfferResponse,
   publishOffer,
   updateOffer,
-} from "./ebayHttpClient.ts";
+} from "./generatedClient/inventoryApiClient.ts";
 import { Card } from "../scryfall.ts";
 import "./ebayClientInit.ts";
 

@@ -2,7 +2,7 @@ import runtimeConfig from "@ebay/config";
 import EbayAuthToken from "ebay-oauth-nodejs-client";
 import { KyInstance } from "ky";
 import authClient from "../authClient.ts";
-import { initApiClient } from "./ebayHttpClient.ts";
+import { initApiClient } from "./generatedClient/inventoryApiClient.ts";
 
 const scopes = [
   "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
