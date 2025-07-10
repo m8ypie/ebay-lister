@@ -4,7 +4,7 @@
     "generateClients": "deno run -A ./transform/mod.ts && deno fmt"
   },
   "imports": {
-    "@m8ypie/open-api-http-client-generator": "jsr:@m8ypie/open-api-http-client-generator@0.0.3-beta",
+    "@m8ypie/open-api-http-client-generator": "jsr:@m8ypie/open-api-http-client-generator@0.0.3",
     "@std/assert": "jsr:@std/assert@1",
     "ky": "https://esm.sh/ky",
     "@ebay/services": "./services/mod.ts",
@@ -12,5 +12,6 @@
     "@ebay/config": "./config.ts",
     "ts-morph": "jsr:@ts-morph/ts-morph@^26.0.0"
   },
-  "nodeModulesDir": "auto"
+  "nodeModulesDir": "auto",
+  "lock": false
 }
