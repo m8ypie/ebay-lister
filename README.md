@@ -84,3 +84,58 @@ To generate the eBay API client, run:
 ```bash
 deno task generateClients
 ```
+
+## Cronicle Custom Plugin
+
+This project includes a custom plugin for
+[Cronicle](https://github.com/jhuckaby/Cronicle) to enable seamless integration
+with eBay Lister workflows.
+
+### Features
+
+- Triggers eBay Lister tasks on a schedule using Cronicle.
+- Supports custom job parameters and environment variables.
+- Handles authentication and error reporting.
+
+### Usage
+
+1. **Install Deno on the Server:**\
+   Before running any eBay Lister tasks with Cronicle, you must have
+   [Deno](https://deno.land/) installed on your server. Follow the instructions
+   on the
+   [official Deno website](https://deno.land/manual@v1.42.1/getting_started/installation)
+   to install Deno.
+
+2. **Copy This Project:**\
+   You need to copy the entire eBay Lister project to your server or environment
+   where Cronicle is running. The plugin and all related scripts depend on the
+   full project structure.
+
+3. **Configure the Plugin in Cronicle:**\
+   In the Cronicle web UI, add a new Plugin and point it to the relevant script
+   within this project (e.g., a wrapper or entrypoint script for the desired
+   task).\
+   Set up a new Event and choose the script as the handler.
+
+4. **Set Plugin Parameters:**\
+   You can pass custom parameters (such as which eBay Lister task to run) via
+   the Cronicle event configuration. Cronicle will not have deno in its PATH by
+   default. You will need to include it as a parameter, see example below.
+
+5. **Environment Variables:**\
+   You can specify all required env vars in cronicle. Or you can set a .env file
+   at /opt/cronicle/bin
+
+### Example Event Configuration
+
+![Cronicle Example Event Configuration](./cronicle-plugin-example.png)
+
+### Notes
+
+- Ensure all scripts have execute permissions if needed.
+- See the project source for more configuration options and usage examples.
+
+---
+
+For more details on Cronicle plugins, see the
+[Cronicle Plugin Documentation](https://github.com/jhuckaby/Cronicle/wiki/Plugins)
