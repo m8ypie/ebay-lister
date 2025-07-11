@@ -218,7 +218,7 @@ Scry.Card.prototype.toEbayListingItem =
         Manufacturer: ["Wizards of the Coast"],
         Features: ([] as string[])
           .concat(this.promo_types || [])
-          .concat(...(this.frame_effects || [])),
+          .concat(...(this.frame_effects || [])) || ["None"],
         "Card Type": [this.type_line.ebayLegalString()],
         "Country/Region of Manufacture": ["United States"],
         Finish: [this.sellCardIsFoil ? "Foil" : "Non-Foil"],
