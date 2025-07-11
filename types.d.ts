@@ -1,17 +1,17 @@
 // types.d.ts
 import "scryfall-sdk";
-import type {
-  EbayOfferDetailsWithKeys,
-  InventoryItem,
-} from "ebay-api/types/index.js";
+import {
+  CreateOfferBody,
+  CreateOrReplaceInventoryItemBody,
+} from "@ebay/ebayClient";
 
 declare module "scryfall-sdk" {
   interface Card {
     sellPrice: number;
 
     sellCardIsFoil: boolean;
-    toEbayOffer(): EbayOfferDetailsWithKeys;
-    toEbayListingItem(): InventoryItem;
+    toEbayOffer(): CreateOfferBody;
+    toEbayListingItem(): CreateOrReplaceInventoryItemBody;
     getEbayName(): string;
     setCardPrice(price: number): void;
     getCardPrice(): number;
