@@ -1,3 +1,4 @@
+import "./types.d.ts";
 import { ebayClient, echoMtgClient, scryClient } from "@ebay/services";
 
 export const run = async () => {

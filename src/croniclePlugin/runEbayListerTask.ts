@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A --env-file
+#!/usr/bin/env -S deno run --check -A --env-file
 import "jsr:@std/dotenv/load";
 import { readAll } from "@std/io/read-all";
 import { run } from "../main.ts";
