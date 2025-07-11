@@ -1,4 +1,5 @@
 #!/usr/bin/env -S deno run --allow-env
+import "jsr:@std/dotenv/load";
 import { readAll } from "@std/io/read-all";
 import { ebayClient, echoMtgClient, scryClient } from "@ebay/services";
 type CronicleInput = {
