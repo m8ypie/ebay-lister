@@ -65,4 +65,6 @@ try {
   const encoder = new TextEncoder();
   const data = encoder.encode(`{ "complete": 0, "code": 1 }\n`);
   await Deno.stdout.write(data); // 11
+} finally {
+  Deno.exit(0);
 }
