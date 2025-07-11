@@ -107,7 +107,7 @@ with eBay Lister workflows.
 
 ### Example Event Configuration
 
-![Cronicle Example Event Configuration](./cronicle-plugin-example.png)
+![Cronicle Example Event Configuration](./resources/cronicle-plugin-example.png)
 
 ### Notes
 
