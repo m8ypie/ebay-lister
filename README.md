@@ -39,27 +39,6 @@ file:
   eBay listing price.
 - `MIN_UNIT_PRICE`: The minimum price for an item to be listed on eBay.
 
-## Configuration
-
-The following configuration fields are required and should be set in a `.env`
-file:
-
-- `EBAY_APP_ID`: Your eBay application ID, used for authentication with the eBay
-  API.
-- `EBAY_CERT_ID`: Your eBay certificate ID, used for authentication with the
-  eBay API.
-- `EBAY_DEV_ID`: Your eBay developer ID, used for authentication with the eBay
-  API.
-- `EBAY_REFRESH_TOKEN`: Your eBay refresh token, used to obtain access tokens
-  for the eBay API.
-- `ECHO_MTG_TOKEN`: Your EchoMtg API token, used to authenticate with the
-  EchoMtg inventory API.
-- `ECHO_MTG_EMAIL`: Your EchoMtg account email.
-- `ECHO_MTG_PASSWORD`: Your EchoMtg account password.
-- `OFFER_PERCENTAGE`: The percentage of the EchoMtg purchase price to use as the
-  eBay listing price.
-- `MIN_UNIT_PRICE`: The minimum price for an item to be listed on eBay.
-
 ## Getting Started
 
 To get started with this project, you will need:
