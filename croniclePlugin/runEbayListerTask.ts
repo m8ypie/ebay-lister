@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run -A
+#!/usr/bin/env -S deno run -A --env-file
 import "jsr:@std/dotenv/load";
 import { readAll } from "@std/io/read-all";
 import { ebayClient, echoMtgClient, scryClient } from "@ebay/services";
