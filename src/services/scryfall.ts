@@ -202,6 +202,10 @@ Scry.Card.prototype.toEbayListingItem =
       ? [this.getImageURI("border_crop")!!]
       : [];
 
+    const features = ([] as string[])
+      .concat(this.promo_types || [])
+      .concat(...(this.frame_effects || []));
+
     const productWithCorrectedAspects: Omit<
       CreateOrReplaceInventoryItemBody["product"],
       "aspects"
@@ -216,9 +220,7 @@ Scry.Card.prototype.toEbayListingItem =
         Game: ["Magic: The Gathering"],
         "Card Name": [this.name.ebayLegalString()],
         Manufacturer: ["Wizards of the Coast"],
-        Features: ([] as string[])
-          .concat(this.promo_types || [])
-          .concat(...(this.frame_effects || [])) || ["None"],
+        Features: features.length ? features : ["None"],
         "Card Type": [this.type_line.ebayLegalString()],
         "Country/Region of Manufacture": ["United States"],
         Finish: [this.sellCardIsFoil ? "Foil" : "Non-Foil"],
