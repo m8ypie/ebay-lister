@@ -24,7 +24,6 @@ try {
   const stdin = new TextDecoder().decode(await readAll(Deno.stdin));
 
   console.log("Cronicle input:", stdin);
-  throw new Error("error reporting to cronicle, this is a test error");
 
   const updateEchoMtgWithSuccess = async (
     inv: echoMtgClient.CardItem,
