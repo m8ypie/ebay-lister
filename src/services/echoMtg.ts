@@ -1,5 +1,5 @@
 import { KyInstance } from "https://esm.sh/ky@1.8.1/distribution/index.d.ts";
-import { runtimeConfig } from "@ebay/config";
+import { runtimeConfig } from "../config.ts";
 import authClient from "./authClient.ts";
 
 const refreshJob = async (refreshClient: KyInstance) => {

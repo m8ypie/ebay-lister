@@ -1,4 +1,4 @@
-import runtimeConfig from "@ebay/config";
+import runtimeConfig from "../../config.ts";
 import EbayAuthToken from "ebay-oauth-nodejs-client";
 import { KyInstance } from "ky";
 import authClient from "../authClient.ts";

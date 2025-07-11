@@ -58,10 +58,10 @@ executing:
 deno task generateClients
 ```
 
-To generate the eBay API client, run:
+Finally you can run the ebay lister script by running
 
 ```bash
-deno task generateClients
+deno run -A --env-file main.ts
 ```
 
 ## Cronicle Custom Plugin

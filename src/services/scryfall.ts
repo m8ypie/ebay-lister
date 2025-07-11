@@ -1,5 +1,5 @@
 import * as Scry from "scryfall-sdk";
-import runtimeConfig from "@ebay/config";
+import runtimeConfig from "../config.ts";
 import { emidToTcgLookUp } from "./emidLookup.ts";
 import { CardItem } from "./echoMtg.ts";
 import {
