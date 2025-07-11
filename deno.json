@@ -1,7 +1,7 @@
 {
   "tasks": {
     "dev": "deno run --watch main.ts",
-    "generateClients": "deno run -A ./transform/mod.ts && deno fmt"
+    "generateClients": "deno run -A ./src/transform/mod.ts && deno fmt"
   },
   "imports": {
     "@m8ypie/open-api-http-client-generator": "jsr:@m8ypie/open-api-http-client-generator@0.0.3",
